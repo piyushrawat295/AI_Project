@@ -18,6 +18,7 @@ import axios from "axios";
 function AddNewSessionDialog() {
   const [note, setNote] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const OnClickNext = async () => {
     try {
@@ -26,6 +27,7 @@ function AddNewSessionDialog() {
         notes: note,
       });
       console.log(result.data);
+      setOpen(false); // close dialog after success
     } catch (error) {
       console.error("API error:", error);
     } finally {
@@ -34,19 +36,24 @@ function AddNewSessionDialog() {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="mt-3">Start a Consultation</Button>
+        <div>
+          <Button className="mt-3">Start a Consultation</Button>
+        </div>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Basic Details</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
-          <h2 className="text-sm text-muted-foreground">Add symptoms or any other details</h2>
+          <h2 className="text-sm text-muted-foreground">
+            Add symptoms or any other details
+          </h2>
           <Textarea
             placeholder="Add detail here..."
             className="h-[150px]"
+            value={note}
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
@@ -54,7 +61,10 @@ function AddNewSessionDialog() {
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button disabled={!note} onClick={()=>OnClickNext()}>Next <ArrowRight/></Button>
+          <Button disabled={!note || loading} onClick={OnClickNext}>
+            {loading ? "Loading..." : "Next"}
+            {!loading && <ArrowRight className="ml-1" size={16} />}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -62,4 +72,3 @@ function AddNewSessionDialog() {
 }
 
 export default AddNewSessionDialog;
-

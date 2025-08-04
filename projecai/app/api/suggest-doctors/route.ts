@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const { notes } = body;
 
     const completion = await openai.chat.completions.create({
-      model: "google/gemma-3n-e4b-it:free",
+      model: "google/gemini-2.5-flash-lite",
       messages: [
         { role: "system", content: JSON.stringify(AIDoctorAgents) },
         {
