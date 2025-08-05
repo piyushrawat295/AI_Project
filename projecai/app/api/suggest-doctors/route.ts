@@ -18,8 +18,12 @@ export async function POST(req: NextRequest) {
       ],
     });
 
+    
     const rawResp = completion.choices[0].message;
-    return NextResponse.json(rawResp);
+    //@ts-ignore
+    const Resp = rawResp.content.trim().replace('```json','').replace('```','')
+    const JSONResp=JSON.parse(Resp)
+    return NextResponse.json(JSONResp);
   } catch (error) {
     console.error("Error generating suggestion:", error);
     return NextResponse.json({ error: "Failed to fetch suggestions" }, { status: 500 });
