@@ -22,3 +22,14 @@ export async function POST(req:NextRequest){
         return NextResponse.json(e)
     }
 }
+
+export async function GET(req:NextRequest){
+    const  {searchParams} = new URL(req.url);
+    const sessionId = searchParams.get('sessionId');
+    const user = await currentUser();
+
+    const result = await db.select().from(sessionChatTable)
+    //@ts-ignore
+    .where(eq(sessionChatTable.sessionId,sessionId));
+    return NextResponse.json(result[0]);
+}
