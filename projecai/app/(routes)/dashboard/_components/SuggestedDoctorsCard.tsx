@@ -19,14 +19,14 @@ function SuggestedDoctorsCard({ doctorAgent, setSelectedDoctor, selectedDoctor }
       onClick={() => setSelectedDoctor(doctorAgent)}
     >
       <Image
-        src={doctorAgent.image}
-        alt={doctorAgent.specialist}
+        src={doctorAgent?.image}
+        alt={doctorAgent?.specialist}
         width={50}
         height={50}
         className="rounded-full object-cover"
       />
       <h2 className="font-bold text-sm mt-2">{doctorAgent.specialist}</h2>
-      <p className="text-xs text-center line-clamp-2">{doctorAgent.description}</p>
+      <p className="text-xs text-center line-clamp-2">{doctorAgent?.description}</p>
     </div>
   )
 }

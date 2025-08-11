@@ -6,17 +6,14 @@ import { useUser } from "@clerk/nextjs";
 import { UserDetailContext } from "@/context/UserDetailContext";
 
 export type UsersDetail = {
-  name: string,
-  emial: string,
-  credits: number
-}
-function Provider({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+  name: string;
+  email: string;
+  credits: number;
+};
+
+function Provider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
-  const [userDetail, setUserDetail] = useState<any>()
+  const [userDetail, setUserDetail] = useState<UsersDetail | null>(null);
 
   const createNewUser = async () => {
     try {
@@ -34,11 +31,11 @@ function Provider({
     }
   }, [user]);
 
-  return <div>
-    <UserDetailContext.Provider value={{userDetail, setUserDetail}}>
-    {children}
+  return (
+    <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+      {children}
     </UserDetailContext.Provider>
-    </div>;
+  );
 }
 
 export default Provider;
