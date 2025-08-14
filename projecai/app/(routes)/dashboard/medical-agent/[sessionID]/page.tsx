@@ -38,6 +38,14 @@ function MedicalVoiceAgent() {
     }
   };
 
+  // Helper to normalize image path
+  const getDoctorImageSrc = () => {
+    const img = sessiondetails?.selectedDoctor.image;
+    if (!img) return "/default-doctor.png"; // fallback image in /public
+    if (img.startsWith("http")) return img; // remote URL
+    return img.startsWith("/") ? img : `/${img}`; // local path
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center">
@@ -47,14 +55,18 @@ function MedicalVoiceAgent() {
         <h2 className="font-bold text-xl text-gray-450">00:00</h2>
       </div>
 
-      {sessiondetails&&<div>
-         <Image
-          src={sessiondetails?.selectedDoctor.image}
-          alt={sessiondetails?.selectedDoctor.specialist || "Doctor"}
-          width={80}
-          height={80}
-        />
-      </div>}
+      {sessiondetails && (
+        <div>
+          <Image
+            src={getDoctorImageSrc()}
+            alt={sessiondetails?.selectedDoctor.specialist || "Doctor"}
+            width={80}
+            height={80}
+            className="h-auto"
+            priority // speeds up loading if visible immediately
+          />
+        </div>
+      )}
     </div>
   );
 }

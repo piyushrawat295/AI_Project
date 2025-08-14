@@ -15,19 +15,23 @@ function Provider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const [userDetail, setUserDetail] = useState<UsersDetail | null>(null);
 
-  const createNewUser = async () => {
+  const getOrCreateUser = async () => {
     try {
-      const res = await axios.post("/api/users");
-      console.log("User result:", res.data);
-      setUserDetail(res.data);
+      const res = await axios.get("/api/users");
+      if (res.data) {
+        setUserDetail(res.data);
+      } else {
+        const createRes = await axios.post("/api/users");
+        setUserDetail(createRes.data);
+      }
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error fetching/creating user:", error);
     }
   };
 
   useEffect(() => {
     if (user) {
-      createNewUser();
+      getOrCreateUser();
     }
   }, [user]);
 
