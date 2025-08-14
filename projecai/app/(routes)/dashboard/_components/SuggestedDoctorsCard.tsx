@@ -25,7 +25,7 @@ function SuggestedDoctorsCard({ doctorAgent, setSelectedDoctor, selectedDoctor }
         height={50}
         className="rounded-full object-cover"
       />
-      <h2 className="font-bold text-sm mt-2">{doctorAgent.specialist}</h2>
+      <h2 className="font-bold text-sm mt-2">{doctorAgent?.specialist}</h2>
       <p className="text-xs text-center line-clamp-2">{doctorAgent?.description}</p>
     </div>
   )

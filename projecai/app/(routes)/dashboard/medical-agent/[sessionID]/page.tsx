@@ -47,14 +47,14 @@ function MedicalVoiceAgent() {
         <h2 className="font-bold text-xl text-gray-450">00:00</h2>
       </div>
 
-      {sessiondetails?.selectedDoctor?.image && (
-        <Image
-          src={sessiondetails.selectedDoctor.image}
-          alt={sessiondetails.selectedDoctor.specialist || "Doctor"}
-          width={200}
-          height={200}
+      {sessiondetails&&<div>
+         <Image
+          src={sessiondetails?.selectedDoctor.image}
+          alt={sessiondetails?.selectedDoctor.specialist || "Doctor"}
+          width={80}
+          height={80}
         />
-      )}
+      </div>}
     </div>
   );
 }
