@@ -2,6 +2,7 @@ import { db } from "@/config/db";
 import { sessionChatTable } from "@/config/schema";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm"; 
 import {v4 as uuidv4} from 'uuid';
 
 export async function POST(req:NextRequest){

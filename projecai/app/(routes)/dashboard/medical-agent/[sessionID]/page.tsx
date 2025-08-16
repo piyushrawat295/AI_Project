@@ -18,7 +18,9 @@ type SessionDetail = {
 
 function MedicalVoiceAgent() {
   const [sessiondetails, setSessionDetails] = useState<SessionDetail>();
-  const { sessionId } = useParams();
+  const { sessionId } = useParams() as { sessionId: string };
+  console.log("sessionId:", sessionId);
+
 
   useEffect(() => {
     if (sessionId) {
