@@ -10,22 +10,33 @@ export async function POST(req: NextRequest) {
     const completion = await openai.chat.completions.create({
       model: "google/gemini-2.5-flash-lite",
       messages: [
-        { role: "system", content: JSON.stringify(AIDoctorAgents) },
+        {
+          role: "system",
+          content:
+            "You are a medical assistant. Based on symptoms, suggest the best matching doctor specialists from the provided list: " +
+            AIDoctorAgents.map(d => d.specialist).join(", "),
+        },
         {
           role: "user",
-          content: `User Notes/Symptoms: ${notes}. Based on these, suggest a list of doctors. Return a JSON object only.`,
+          content: `User symptoms: ${notes}. Return an array of specialists (e.g. ["General Physician","Dermatologist"]).`,
         },
       ],
     });
 
-    
-    const rawResp = completion.choices[0].message;
-    //@ts-ignore
-    const Resp = rawResp.content.trim().replace('```json','').replace('```','')
-    const JSONResp=JSON.parse(Resp)
-    return NextResponse.json(JSONResp);
+    const rawResp = completion.choices[0].message?.content || "[]";
+    const suggestedSpecialists = JSON.parse(rawResp);
+
+    // Map back to original list so images/desc stay intact
+    const finalDoctors = AIDoctorAgents.filter(d =>
+      suggestedSpecialists.includes(d.specialist)
+    );
+
+    return NextResponse.json(finalDoctors);
   } catch (error) {
     console.error("Error generating suggestion:", error);
-    return NextResponse.json({ error: "Failed to fetch suggestions" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch suggestions" },
+      { status: 500 }
+    );
   }
 }
