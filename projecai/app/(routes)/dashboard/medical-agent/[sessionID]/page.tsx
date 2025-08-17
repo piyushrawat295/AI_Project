@@ -17,142 +17,153 @@ type SessionDetail = {
   selectedDoctor: doctorAgent;
   createdOn: string;
 };
-type messages = {
-  role: string;
-  text: string;
-};
-function MedicalVoiceAgent() {
-  const [sessiondetails, setSessionDetails] = useState<SessionDetail>();
-  const { sessionId } = useParams() as { sessionId: string };
-  console.log("sessionId:", sessionId);
-  const [callstarted, setcallstarted] = useState(false);
-  const [vapiInstance, setVapiinstance] = useState<any>();
-  const [currentRole, setcurrentRole] = useState<string | null>();
 
-  const [livetranscript, setLivetranscript] = useState<string>();
-  const [messages, setmessages] = useState<messages[]>([]);
+type Msg = { role: string; text: string };
+
+function MedicalVoiceAgent() {
+  const { sessionId } = useParams() as { sessionId: string };
+
+  const [sessiondetails, setSessionDetails] = useState<SessionDetail>();
+  const [callstarted, setCallStarted] = useState(false);
+  const [vapiInstance, setVapiInstance] = useState<any>(null);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [liveTranscript, setLiveTranscript] = useState<string>("");
+  const [messages, setMessages] = useState<Msg[]>([]);
+
+  // fetch session details
   useEffect(() => {
-    if (sessionId) {
-      GetSessionDetails();
-    }
+    if (sessionId) GetSessionDetails();
+
+    return () => {
+      if (vapiInstance) {
+        try {
+          vapiInstance.stop();
+          vapiInstance.removeAllListeners();
+        } catch {}
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const GetSessionDetails = async () => {
     try {
-      const result = await axios.get(
-        `/api/session-chat?sessionId=${sessionId}`
-      );
-      console.log("Fetched session details:", result.data);
+      const result = await axios.get(`/api/session-chat?sessionId=${sessionId}`);
       setSessionDetails(result.data);
     } catch (error) {
       console.error("Error fetching session details:", error);
     }
   };
 
-  // const StartCall = () => {
-  //   const vapi = new Vapi("aa881f92-b01a-4555-8003-480a8a931dcf");
-  //   setVapiinstance(vapi);
-
-  //   vapi.start("621ff765-691b-4386-b018-ad5774576a62");
-
-  //   vapi.on("call-start", () => {
-  //     console.log("Call started");
-  //     setcallstarted(true);
-  //   });
-
-  //   vapi.on("call-end", () => {
-  //     console.log("Call ended");
-  //     setcallstarted(false);
-  //   });
-
-  //   vapi.on("message", (message) => {
-  //     if (message.type === "transcript") {
-  //       const { role, transcriptType, transcript } = message;
-
-  //       if (transcriptType === "partial") {
-  //         setLivetranscript(transcript);
-  //         setcurrentRole(role);
-  //       } else if (transcriptType === "final") {
-  //         setmessages((prev) => [...prev, { role, text: transcript }]);
-  //         setLivetranscript("");
-  //         setcurrentRole(null);
-  //       }
-  //     }
-  //   });
-
-  //   vapi.on("speech-start", () => {
-  //     console.log("Assistant started speaking");
-  //     setcurrentRole("assistant");
-  //   });
-
-  //   vapi.on("speech-end", () => {
-  //     console.log("Assistant stopped speaking");
-  //     setcurrentRole("user");
-  //   });
-  // };
-
   const StartCall = () => {
+    if (vapiInstance) {
+      console.warn("Vapi already running; ignoring StartCall");
+      return;
+    }
+
     const vapi = new Vapi("aa881f92-b01a-4555-8003-480a8a931dcf");
-    setVapiinstance(vapi);
+    setVapiInstance(vapi);
 
-    vapi.start("621ff765-691b-4386-b018-ad5774576a62");
+    // safe fallbacks
+    const VapiAgentConfig = {
+      name: "AI Medical Doctor Voice Agent",
+      firstMessage:
+        "Hi there! I am your Medical Assistant. I am here to help you.",
+      transcriber: {
+        provider: "assembly-ai",
+        language: "en",
+      },
+      voice: {
+        provider: "vapi",
+        voiceId: sessiondetails?.selectedDoctor?.voiceid || "Kylie", // fallback
+      },
+      model: {
+        provider: "google",
+        model: "gemini-2.5-flash", // must be valid model name
+        messages: [
+          {
+            role: "system",
+            content:
+              sessiondetails?.selectedDoctor?.agentPrompt ||
+              "You are a helpful medical assistant.",
+          },
+        ],
+      },
+    };
 
+    // --- event handlers ---
     vapi.on("call-start", () => {
-      console.log("Call started");
-      setcallstarted(true);
+      console.log("Vapi call started");
+      setCallStarted(true);
+      setCurrentRole("assistant");
     });
 
     vapi.on("call-end", () => {
-      console.log("Call ended");
-      setcallstarted(false);
+      console.log("Vapi call ended");
+      setCallStarted(false);
+      setCurrentRole(null);
+      setLiveTranscript("");
     });
 
-    vapi.on("message", (message) => {
+    vapi.on("error", (err: any) => {
+      console.error("Vapi error:", err?.message || err);
+      setCallStarted(false);
+      setCurrentRole(null);
+    });
+
+    vapi.on("message", (message: any) => {
       if (message.type === "transcript") {
         const { role, transcriptType, transcript } = message;
-
         if (transcriptType === "partial") {
-          setLivetranscript(transcript);
-          setcurrentRole(role);
+          setLiveTranscript(transcript || "");
+          setCurrentRole(role || null);
         } else if (transcriptType === "final") {
-          setmessages((prev) => [...prev, { role, text: transcript }]);
-          setLivetranscript("");
-          setcurrentRole(null);
+          if (transcript) {
+            setMessages((prev) => [...prev, { role, text: transcript }]);
+          }
+          setLiveTranscript("");
+          setCurrentRole(null);
         }
+      }
+
+      if (message.type === "response" && message.text) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: message.text },
+        ]);
       }
     });
 
-    vapi.on("speech-start", () => {
-      console.log("Assistant started speaking");
-      setcurrentRole("assistant");
-    });
+    vapi.on("speech-start", () => setCurrentRole("assistant"));
+    vapi.on("speech-end", () => setCurrentRole("user"));
 
-    vapi.on("speech-end", () => {
-      console.log("Assistant stopped speaking");
-      setcurrentRole("user");
-    });
+    try {
+      //@ts-ignore
+      vapi.start(VapiAgentConfig);
+    } catch (e) {
+      console.error("Failed to start Vapi:", e);
+    }
   };
 
   const EndCall = () => {
-  if (!vapiInstance) return;
-  try {
-    console.log("Ending Call..");
-    vapiInstance.stop();
-    vapiInstance.removeAllListeners(); // cleaner way
-    setcallstarted(false);
-    setVapiinstance(null);
-  } catch (err) {
-    console.error("Vapi stop error:", err);
-  }
-};
+    if (!vapiInstance) return;
+    try {
+      vapiInstance.stop();
+      vapiInstance.removeAllListeners();
+    } catch (err) {
+      console.error("Vapi stop error:", err);
+    } finally {
+      setCallStarted(false);
+      setCurrentRole(null);
+      setLiveTranscript("");
+      setVapiInstance(null);
+    }
+  };
 
-
-  // Helper to normalize image path
   const getDoctorImageSrc = () => {
     const img = sessiondetails?.selectedDoctor.image;
-    if (!img) return "/default-doctor.png"; // fallback image in /public
-    if (img.startsWith("http")) return img; // remote URL
-    return img.startsWith("/") ? img : `/${img}`; // local path
+    if (!img) return "/default-doctor.png";
+    if (img.startsWith("http")) return img;
+    return img.startsWith("/") ? img : `/${img}`;
   };
 
   return (
@@ -164,7 +175,6 @@ function MedicalVoiceAgent() {
               callstarted ? "text-green-500" : "text-red-500"
             }`}
           />
-
           {callstarted ? "Connected..." : "Not Connected"}
         </h2>
         <h2 className="font-bold text-xl text-gray-400">00:00</h2>
@@ -177,35 +187,38 @@ function MedicalVoiceAgent() {
             alt={sessiondetails?.selectedDoctor.specialist || "Doctor"}
             width={120}
             height={120}
-            className="h-[100px] w-[100px]  object-cover rounded-full"
-            priority // speeds up loading if visible immediately
+            className="h-[100px] w-[100px] object-cover rounded-full"
+            priority
           />
           <h2 className="mt-2 text-lg">
             {sessiondetails?.selectedDoctor?.specialist}
           </h2>
           <p className="text-sm text-gray-400">AI Medical Voice Agent</p>
 
-          <div className="mt-35">
-            {messages?.map((msg, index) => (
+          <div className="mt-10 overflow-y-auto flex flex-col items-center px-10 md:px-28 lg:px-52 xl:px-72">
+            {messages.slice(-5).map((msg, index) => (
               <h2 className="text-gray-400" key={index}>
-                {msg.role}:{msg.text}
+                {msg.role}: {msg.text}
               </h2>
             ))}
-            <h2 className="text-gray-400">Assistant Msg</h2>
-            {livetranscript && livetranscript?.length > 0 && (
+            {liveTranscript && (
               <h2 className="text-lg">
-                {currentRole} :{livetranscript}
+                {currentRole} : {liveTranscript}
               </h2>
             )}
           </div>
 
           {!callstarted ? (
-            <Button className="mt-20" onClick={StartCall}>
+            <Button className="mt-10" onClick={StartCall}>
               <PhoneCall />
               Start Call
             </Button>
           ) : (
-            <Button variant="destructive" className="mt-20" onClick={EndCall}>
+            <Button
+              variant="destructive"
+              className="mt-10"
+              onClick={EndCall}
+            >
               <PhoneOff />
               Disconnect
             </Button>
