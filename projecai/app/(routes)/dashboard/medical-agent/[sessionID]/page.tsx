@@ -1,13 +1,14 @@
 "use client";
 
 import axios from "axios";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { doctorAgent } from "../../_components/DoctorAgentCard";
-import { Circle, PhoneCall, PhoneOff } from "lucide-react";
+import { Circle, Loader, PhoneCall, PhoneOff } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Vapi from "@vapi-ai/web";
+import { toast } from "sonner";
 
 type SessionDetail = {
   id: number;
@@ -29,7 +30,8 @@ function MedicalVoiceAgent() {
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState<string>("");
   const [messages, setMessages] = useState<Msg[]>([]);
-
+  const [loading, setloading] = useState(false);
+  const router = useRouter();
   // fetch session details
   useEffect(() => {
     if (sessionId) GetSessionDetails();
@@ -47,7 +49,9 @@ function MedicalVoiceAgent() {
 
   const GetSessionDetails = async () => {
     try {
-      const result = await axios.get(`/api/session-chat?sessionId=${sessionId}`);
+      const result = await axios.get(
+        `/api/session-chat?sessionId=${sessionId}`
+      );
       setSessionDetails(result.data);
     } catch (error) {
       console.error("Error fetching session details:", error);
@@ -74,7 +78,7 @@ function MedicalVoiceAgent() {
       },
       voice: {
         provider: "vapi",
-        voiceId: sessiondetails?.selectedDoctor?.voiceid || "Kylie", // fallback
+        voiceId: sessiondetails?.selectedDoctor?.voiceId || "Kylie", // fallback
       },
       model: {
         provider: "google",
@@ -144,7 +148,8 @@ function MedicalVoiceAgent() {
     }
   };
 
-  const EndCall = () => {
+  const EndCall = async () => {
+    setloading(true);
     if (!vapiInstance) return;
     try {
       vapiInstance.stop();
@@ -157,6 +162,21 @@ function MedicalVoiceAgent() {
       setLiveTranscript("");
       setVapiInstance(null);
     }
+    toast.success('Your report is generated');
+    const result = await GenerateReport();
+    setloading(false);
+    router.replace('/dashboard');
+
+  };
+
+  const GenerateReport = async () => {
+    const result = await axios.post("/api/medical-report", {
+      messages: messages,
+      sessiondetails: sessiondetails,
+      sessionId: sessionId,
+    });
+    console.log(result.data);
+    return result.data;
   };
 
   const getDoctorImageSrc = () => {
@@ -209,8 +229,8 @@ function MedicalVoiceAgent() {
           </div>
 
           {!callstarted ? (
-            <Button className="mt-10" onClick={StartCall}>
-              <PhoneCall />
+            <Button className="mt-10" onClick={StartCall} disabled={loading}>
+              {loading ? <Loader className="animate-spin" /> : <PhoneCall />}
               Start Call
             </Button>
           ) : (
@@ -218,8 +238,9 @@ function MedicalVoiceAgent() {
               variant="destructive"
               className="mt-10"
               onClick={EndCall}
+              disabled={loading}
             >
-              <PhoneOff />
+              {loading ? <Loader className="animate-spin" /> : <PhoneOff />}
               Disconnect
             </Button>
           )}

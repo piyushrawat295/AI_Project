@@ -9,7 +9,7 @@ export type doctorAgent={
     description:string,
     image:string,
     agentPrompt:string,
-    voiceid?:string
+    voiceId?:string
 }
 
 export type props={
