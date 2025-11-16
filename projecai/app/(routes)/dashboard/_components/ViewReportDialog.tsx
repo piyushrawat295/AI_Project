@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { SessionDetail } from "../medical-agent/[sessionId]/page";
+import { SessionDetail } from "../_components/types";
 import moment from "moment";
 
 type Props = {
