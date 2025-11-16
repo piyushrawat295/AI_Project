@@ -9,15 +9,16 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Vapi from "@vapi-ai/web";
 import { toast } from "sonner";
+import { SessionDetail } from "../../_components/types";
 
-export type SessionDetail = {
-  id: number;
-  notes: string;
-  sessionId: string;
-  report: JSON;
-  selectedDoctor: doctorAgent;
-  createdOn: string;
-};
+// export type SessionDetail = {
+//   id: number;
+//   notes: string;
+//   sessionId: string;
+//   report: JSON;
+//   selectedDoctor: doctorAgent;
+//   createdOn: string;
+// };
 
 type Msg = { role: string; text: string };
 

@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 import AddNewSessionDialog from './AddNewSessionDialog';
 import axios from 'axios';
 import HistoryTable from './HistoryTable';
-import { SessionDetail } from '../medical-agent/[sessionId]/page';
+import { SessionDetail } from '../_components/types';
 
 function HistoryList() {
     const [historylist, setHistorylist] = useState<SessionDetail[]>([]);
