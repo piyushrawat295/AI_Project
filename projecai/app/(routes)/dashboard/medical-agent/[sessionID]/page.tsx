@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { doctorAgent } from "../../_components/DoctorAgentCard";
+// import { doctorAgent } from "../../_components/DoctorAgentCard";
 import { Circle, Loader, PhoneCall, PhoneOff } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
