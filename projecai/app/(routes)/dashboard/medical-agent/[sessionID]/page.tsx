@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -82,8 +83,8 @@ function MedicalVoiceAgent() {
         voiceId: sessiondetails?.selectedDoctor?.voiceId || "Kylie", // fallback
       },
       model: {
-        provider: "google",
-        model: "gemini-2.5-flash", // must be valid model name
+        provider: "openai",
+        model: "gpt-5-nano", // must be valid model name
         messages: [
           {
             role: "system",
